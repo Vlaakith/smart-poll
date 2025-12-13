@@ -15,7 +15,6 @@ const days = [
   { id: 'sun', name: 'Вс', full: 'Воскресенье' }
 ];
 
-// ⚠️ ЗАМЕНИ ЭТУ ССЫЛКУ на свою из Google Apps Script!
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylnyHDaVuQEgW1W2APPAHoBeiyJiF26K5NC4FomI2Ji2OnbtNEa-uHhlML3oyL8VYOFQ/exec';
 
 // Текущие онлайн-встречи (из расписания)
