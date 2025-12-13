@@ -15,6 +15,9 @@ const days = [
   { id: 'sun', name: 'Вс', full: 'Воскресенье' }
 ];
 
+// ⚠️ ЗАМЕНИ ЭТУ ССЫЛКУ на свою из Google Apps Script!
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylnyHDaVuQEgW1W2APPAHoBeiyJiF26K5NC4FomI2Ji2OnbtNEa-uHhlML3oyL8VYOFQ/exec';
+
 // Текущие онлайн-встречи (из расписания)
 const existingMeetings = {
   'mon-10:00': 'Дина, 90 мин',
@@ -26,12 +29,21 @@ const existingMeetings = {
   'fri-19:00': 'Виктор, 90 мин',
   'sat-05:00': 'Надежда, 60 мин',
   'sat-17:00': 'Алиса, 60 мин',
-  'sun-07:00': 'Виктор К., 90 мин'
+  'sun-07:00': 'Виктор, 90 мин'
+};
+
+// Преобразование slotId в читаемый формат
+const formatSlot = (slotId) => {
+  const [dayId, time] = slotId.split('-');
+  const day = days.find(d => d.id === dayId);
+  return `${day?.full || dayId} ${time}`;
 };
 
 export default function App() {
   const [selected, setSelected] = useState(new Set());
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState(null);
 
@@ -76,8 +88,32 @@ export default function App() {
     setDragMode(null);
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    if (selected.size === 0) return;
+    
+    setSending(true);
+    setError(null);
+    
+    const slots = Array.from(selected).sort().map(formatSlot);
+    
+    try {
+      await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Google Apps Script требует этого
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ slots }),
+      });
+      
+      // no-cors не даёт прочитать ответ, но если ошибки нет — считаем успехом
+      setSubmitted(true);
+    } catch (err) {
+      setError('Не удалось отправить. Попробуйте ещё раз.');
+      console.error(err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const getSlotStyle = (slotId) => {
@@ -108,7 +144,7 @@ export default function App() {
             <p className="text-gray-600 mt-2">Ваш ответ записан</p>
           </div>
           
-          {byDay.length > 0 ? (
+          {byDay.length > 0 && (
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-sm text-gray-500 mb-3">Вы отметили:</p>
               {byDay.map(({ day, slots }) => (
@@ -118,8 +154,6 @@ export default function App() {
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-500 text-center">Вы не отметили ни одного слота</p>
           )}
           
           <button
@@ -146,7 +180,7 @@ export default function App() {
           </h1>
           <p className="text-gray-600 text-sm md:text-base">
             Отметьте все слоты, когда вы могли бы посещать онлайн-встречу СМАРТ Рекавери. 
-            Можно кликать или «рисовать» мышкой.
+            Можно кликать или «рисовать» мышкой. Время указано московское.
           </p>
           
           <div className="flex gap-4 mt-4 text-sm flex-wrap">
@@ -211,12 +245,24 @@ export default function App() {
           <p className="text-sm text-gray-500">
             Выбрано слотов: <span className="font-medium text-gray-700">{selected.size}</span>
           </p>
-          <button
-            onClick={handleSubmit}
-            className="w-full md:w-auto px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl transition-colors"
-          >
-            Отправить
-          </button>
+          
+          <div className="flex flex-col items-end gap-2">
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
+            <button
+              onClick={handleSubmit}
+              disabled={sending || selected.size === 0}
+              className={`
+                w-full md:w-auto px-8 py-3 font-medium rounded-xl transition-colors
+                ${sending || selected.size === 0 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
+              `}
+            >
+              {sending ? 'Отправка...' : 'Отправить'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
