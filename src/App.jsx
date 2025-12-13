@@ -113,6 +113,7 @@ export default function App() {
       
       // no-cors не даёт прочитать ответ, но если ошибки нет — считаем успехом
       setSubmitted(true);
+      window.parent.postMessage({ type: 'poll-submitted' }, '*');
     } catch (err) {
       setError('Не удалось отправить. Попробуйте ещё раз.');
       console.error(err);
