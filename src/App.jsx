@@ -337,6 +337,11 @@ export default function App() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-2 md:p-4 overflow-x-auto">
+          {selected.size > 0 && (
+            <div className="mb-3 mx-1 md:mx-0 px-3 py-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg text-center">
+              Отлично! Когда закончите — кнопка «Отправить» внизу ↓
+            </div>
+          )}
           <div className="min-w-[500px]">
             {/* Header */}
             <div className="grid grid-cols-8 gap-1 mb-1">
@@ -389,29 +394,27 @@ export default function App() {
           </div>
         </div>
 
-        <div className="sticky bottom-0 left-0 right-0 mt-4 p-4 bg-gray-50 border-t border-gray-200 md:relative md:border-0 md:p-0 md:mt-4 md:bg-transparent">
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-center justify-between max-w-4xl mx-auto">
-            <p className="text-sm text-gray-500">
-              Выбрано слотов: <span className="font-medium text-gray-700">{selected.size}</span>
-            </p>
-            
-            <div className="flex flex-col items-stretch md:items-end gap-2 w-full md:w-auto">
-              {error && (
-                <p className="text-sm text-red-500 text-center md:text-right">{error}</p>
-              )}
-              <button
-                onClick={handleSubmit}
-                disabled={sending || selected.size === 0}
-                className={`
-                  w-full md:w-auto px-8 py-3 font-medium rounded-xl transition-colors
-                  ${sending || selected.size === 0 
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                    : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
-                `}
-              >
-                {sending ? 'Отправка...' : 'Отправить'}
-              </button>
-            </div>
+        <div className="mt-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <p className="text-sm text-gray-500">
+            Выбрано слотов: <span className="font-medium text-gray-700">{selected.size}</span>
+          </p>
+          
+          <div className="flex flex-col items-center md:items-end gap-2 w-full md:w-auto">
+            {error && (
+              <p className="text-sm text-red-500">{error}</p>
+            )}
+            <button
+              onClick={handleSubmit}
+              disabled={sending || selected.size === 0}
+              className={`
+                w-full md:w-auto px-8 py-3 font-medium rounded-xl transition-colors
+                ${sending || selected.size === 0 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white'}
+              `}
+            >
+              {sending ? 'Отправка...' : 'Отправить'}
+            </button>
           </div>
         </div>
       </div>
