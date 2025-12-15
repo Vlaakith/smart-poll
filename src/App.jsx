@@ -319,7 +319,7 @@ export default function App() {
             </select>
             {timezone !== 'msk' && (
               <p className="text-xs text-gray-500 mt-2">
-                Время на сетке показано для вашего пояса. В расписание пойдёт московское время.
+                Время на сетке показано для вашего пояса.
               </p>
             )}
           </div>
