@@ -61,7 +61,8 @@ const timezoneGroups = [
 // Плоский список для поиска по id
 const allTimezones = timezoneGroups.flatMap(g => g.zones);
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylnyHDaVuQEgW1W2APPAHoBeiyJiF26K5NC4FomI2Ji2OnbtNEa-uHhlML3oyL8VYOFQ/exec';
+// ⚠️ ЗАМЕНИ ЭТУ ССЫЛКУ на свою из Google Apps Script!
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/ТВОЯ_ССЫЛКА_СЮДА/exec';
 
 // Текущие онлайн-встречи в МСК (из расписания)
 const existingMeetingsMSK = {
@@ -337,11 +338,13 @@ export default function App() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm p-2 md:p-4 overflow-x-auto">
-          {selected.size > 0 && (
-            <div className="mb-3 mx-1 md:mx-0 px-3 py-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg text-center">
-              Отлично! Когда закончите — кнопка «Отправить» внизу ↓
-            </div>
-          )}
+          <div className={`mb-3 mx-1 md:mx-0 px-3 py-2 text-sm rounded-lg text-center transition-all ${
+            selected.size > 0 
+              ? 'bg-emerald-50 text-emerald-700' 
+              : 'bg-transparent text-transparent select-none'
+          }`}>
+            Отлично! Когда закончите — кнопка «Отправить» внизу ↓
+          </div>
           <div className="min-w-[500px]">
             {/* Header */}
             <div className="grid grid-cols-8 gap-1 mb-1">
