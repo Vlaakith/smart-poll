@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 const days = [
   { id: 'mon', name: 'Пн', full: 'Понедельник' },
@@ -61,26 +61,76 @@ const timezoneGroups = [
 // Плоский список для поиска по id
 const allTimezones = timezoneGroups.flatMap(g => g.zones);
 
+// ⚠️ ЗАМЕНИ ЭТУ ССЫЛКУ на свою из Google Apps Script!
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbylnyHDaVuQEgW1W2APPAHoBeiyJiF26K5NC4FomI2Ji2OnbtNEa-uHhlML3oyL8VYOFQ/exec';
 
-// Текущие онлайн-встречи в МСК (из расписания)
-const existingMeetingsMSK = {
-	'mon-10:00': 'Дина, 90 мин',
-	'mon-19:00': 'Две встречи: семьи + аддикции',
-	'tue-10:00': 'Алиса, 60 мин',
-	'tue-21:00': 'Эдуард, 90 мин',
-	'wed-10:00': 'Елена, 60 мин',
-	'wed-19:00': 'Дмитрий, 60 мин',
-	'wed-19:00': 'Дмитрий, 60 мин',
-	'thu-13:00': 'Михаил и Ринат, 90 мин',
-	'thu-20:00': 'Юлия, 60 мин',
-	'fri-10:00': 'Олеся, 60 мин',
-	'fri-19:00': 'Виктор, 90 мин',
-	'fri-20:00': 'Елена, 60 мин',
-	'sat-05:00': 'Надежда, 60 мин',
-	'sat-13:00': 'Екатерина, 90 мин',
-	'sat-17:00': 'Алиса, 60 мин',
-	'sun-07:00': 'Виктор, 90 мин'
+// URL расписания — тот же GAS, что и на сайте
+const SCHEDULE_URL = 'https://script.google.com/macros/s/AKfycbxMnsFXRBdGN2AktwBTcCB9qRcHuQy11fPdN9bpQUB_QEDbWYOy6vdiOKsC9vFrJUOE/exec';
+
+const DAY_NAME_TO_ID = {
+  'Понедельник': 'mon',
+  'Вторник': 'tue',
+  'Среда': 'wed',
+  'Четверг': 'thu',
+  'Пятница': 'fri',
+  'Суббота': 'sat',
+  'Воскресенье': 'sun',
+};
+
+const parseScheduleHtml = (html) => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const meetings = {};
+
+  let currentDay = null;
+  let inOnline = false;
+
+  const elements = doc.querySelectorAll('h2, h3, .meeting-card');
+
+  for (const el of elements) {
+    if (el.tagName === 'H2') {
+      inOnline = el.id === 'online';
+      continue;
+    }
+
+    if (!inOnline) continue;
+
+    if (el.tagName === 'H3') {
+      currentDay = DAY_NAME_TO_ID[el.textContent.trim()];
+      continue;
+    }
+
+    if (el.classList.contains('meeting-card') && currentDay) {
+      const firstP = el.querySelector('p');
+      if (!firstP) continue;
+
+      const text = firstP.textContent.trim();
+      const match = text.match(/^(\d{1,2}):(\d{2}):\s*Тема\s*«([^»]+)»/);
+      if (!match) continue;
+
+      const [, hours, , topic] = match;
+      if (topic !== 'Для любых аддикций') continue;
+
+      const hourStr = hours.padStart(2, '0');
+      const key = `${currentDay}-${hourStr}:00`;
+
+      // Фасилитатор и длительность для тултипа
+      let duration = '';
+      let facilitator = '';
+
+      for (const p of el.querySelectorAll('p')) {
+        const pText = p.textContent.trim();
+        const dMatch = pText.match(/^Продолжительность\s+(\d+)/);
+        if (dMatch) duration = `${dMatch[1]} мин`;
+        const fMatch = pText.match(/^Фасилитаторы?\s+(.+)/);
+        if (fMatch) facilitator = fMatch[1].split(',')[0].trim();
+      }
+
+      meetings[key] = [facilitator, duration].filter(Boolean).join(', ') || 'Встреча';
+    }
+  }
+
+  return meetings;
 };
 
 // Генерация 24 часов
@@ -124,6 +174,14 @@ export default function App() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState(null);
   const [timezone, setTimezone] = useState('msk');
+  const [existingMeetingsMSK, setExistingMeetingsMSK] = useState({});
+
+  useEffect(() => {
+    fetch(SCHEDULE_URL)
+      .then(r => r.text())
+      .then(html => setExistingMeetingsMSK(parseScheduleHtml(html)))
+      .catch(() => {});
+  }, []);
 
   const currentOffset = allTimezones.find(tz => tz.id === timezone)?.offset || 0;
 
@@ -136,7 +194,7 @@ export default function App() {
       converted[`${newDayId}-${newTime}`] = value;
     });
     return converted;
-  }, [currentOffset]);
+  }, [currentOffset, existingMeetingsMSK]);
 
   // Конвертируем slotId из отображаемого пояса в МСК для хранения
   const displayToMsk = (displaySlotId) => {
@@ -319,7 +377,7 @@ export default function App() {
             </select>
             {timezone !== 'msk' && (
               <p className="text-xs text-gray-500 mt-2">
-                Сетка подстроилась под ваш часовой пояс. Существующие встречи — тоже.
+                Время на сетке показано для вашего пояса. В расписание пойдёт московское время.
               </p>
             )}
           </div>
