@@ -108,6 +108,11 @@ function parseHtml(html) {
       const h3id   = m[2];
       const h3text = stripTags(m[3]).trim();
 
+      // If no h2 was seen yet, infer mode from h3 id
+      if (mode === null) {
+        mode = DAY_BY_SLUG[h3id] ? 'online' : 'offline';
+      }
+
       if (mode === 'online') {
         const dayInfo = DAY_BY_SLUG[h3id];
         if (dayInfo) {
@@ -510,9 +515,12 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  const section = req.query.section; // 'online' to get only online meetings
+  const gasEndpoint = section === 'online' ? `${GAS_URL}?view=online` : GAS_URL;
+
   let html;
   try {
-    const response = await fetch(GAS_URL, { redirect: 'follow' });
+    const response = await fetch(gasEndpoint, { redirect: 'follow' });
     if (!response.ok) {
       throw new Error(`GAS responded with ${response.status}`);
     }
