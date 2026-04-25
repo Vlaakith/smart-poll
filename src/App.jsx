@@ -109,7 +109,6 @@ const parseScheduleHtml = (html) => {
       if (!match) continue;
 
       const [, hours, , topic] = match;
-      if (topic !== 'Для любых аддикций') continue;
 
       const hourStr = hours.padStart(2, '0');
       const key = `${currentDay}-${hourStr}:00`;
@@ -210,8 +209,6 @@ export default function App() {
   };
 
   const toggleSlot = (displaySlotId) => {
-    if (existingMeetingsDisplay[displaySlotId]) return;
-    
     const mskSlotId = displayToMsk(displaySlotId);
     
     setSelected(prev => {
@@ -226,7 +223,6 @@ export default function App() {
   };
 
   const handleMouseDown = (slotId) => {
-    if (existingMeetingsDisplay[slotId]) return;
     setIsDragging(true);
     const willAdd = !isSlotSelected(slotId);
     setDragMode(willAdd ? 'add' : 'remove');
@@ -234,7 +230,7 @@ export default function App() {
   };
 
   const handleMouseEnter = (slotId) => {
-    if (!isDragging || existingMeetingsDisplay[slotId]) return;
+    if (!isDragging) return;
     
     const mskSlotId = displayToMsk(slotId);
     
@@ -291,10 +287,15 @@ export default function App() {
   };
 
   const getSlotStyle = (slotId) => {
-    if (existingMeetingsDisplay[slotId]) {
-      return 'bg-amber-100 border-amber-300 cursor-not-allowed';
+    const hasMeeting = existingMeetingsDisplay[slotId];
+    const isSelected = isSlotSelected(slotId);
+    if (hasMeeting && isSelected) {
+      return 'bg-emerald-400 border-emerald-500 cursor-pointer';
     }
-    if (isSlotSelected(slotId)) {
+    if (hasMeeting) {
+      return 'bg-amber-100 border-amber-300 hover:bg-amber-200 cursor-pointer';
+    }
+    if (isSelected) {
       return 'bg-emerald-400 border-emerald-500 cursor-pointer';
     }
     return 'bg-white border-gray-200 hover:bg-emerald-50 cursor-pointer';
@@ -385,7 +386,7 @@ export default function App() {
           <div className="flex gap-4 text-sm flex-wrap">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-amber-100 border border-amber-300"></div>
-              <span className="text-gray-600">Уже есть встреча</span>
+              <span className="text-gray-600">Есть встреча</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 rounded bg-emerald-400 border border-emerald-500"></div>
